@@ -2,6 +2,7 @@
 using DemoLibrary.Utilities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DemoLibrary.Logic
 {
@@ -45,7 +46,16 @@ namespace DemoLibrary.Logic
         {
             string sql = "select * from Person";
 
-            return _database.LoadData<PersonModel>(sql);
+            List<PersonModel> personModels = _database.LoadData<PersonModel>(sql);
+
+            return personModels;
+        }
+
+        public List<PersonModel> LoadPeopleWithLongNames()
+        {
+            List<PersonModel> personModels = _database.LoadDataLongNames<PersonModel>();
+
+            return personModels.Where(p => p.FirstName.Length > 10).ToList();
         }
 
         public void SavePerson(PersonModel person)

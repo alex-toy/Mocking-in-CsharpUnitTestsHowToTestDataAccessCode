@@ -20,6 +20,16 @@ namespace DemoLibrary.Utilities
             }
         }
 
+        public List<T> LoadDataLongNames<T>()
+        {
+            string sql = "select * from Person";
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                var output = cnn.Query<T>(sql, new DynamicParameters());
+                return output.ToList();
+            }
+        }
+
         public void SaveData<T>(T person, string sql)
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))

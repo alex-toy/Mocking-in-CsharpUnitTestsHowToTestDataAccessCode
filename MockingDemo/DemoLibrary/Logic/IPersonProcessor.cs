@@ -8,6 +8,7 @@ namespace DemoLibrary.Logic
         (bool isValid, double heightInInches) ConvertHeightTextToInches(string heightText);
         PersonModel CreatePerson(string firstName, string lastName, string heightText);
         List<PersonModel> LoadPeople();
+        List<PersonModel> LoadPeopleWithLongNames();
         void SavePerson(PersonModel person);
         void UpdatePerson(PersonModel person);
     }
