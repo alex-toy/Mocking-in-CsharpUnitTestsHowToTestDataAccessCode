@@ -62,7 +62,11 @@ namespace DemoLibrary.Logic
         {
             string sql = "insert into Person (FirstName, LastName, HeightInInches) " +
                 "values (@FirstName, @LastName, @HeightInInches)";
-            
+
+            sql.Replace("@FirstName", $"'{person.FirstName}'");
+            sql.Replace("@LastName", $"'{person.LastName}'");
+            sql.Replace("@HeightInInches", $"'{person.HeightInInches}'");
+
             _database.SaveData(person, sql);
         }
 

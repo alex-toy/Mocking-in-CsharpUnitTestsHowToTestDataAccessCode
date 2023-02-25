@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Autofac.Extras.Moq;
+﻿using Autofac.Extras.Moq;
 using DemoLibrary.Logic;
 using DemoLibrary.Models;
-using DemoLibrary.Utilities;
+using MoqDemoTests.Utils;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Xunit;
 
 namespace MoqDemoTests.Logic
@@ -71,6 +71,7 @@ namespace MoqDemoTests.Logic
             }
         }
 
+        // Make sure LoadPeople makes a call to LoadData
         [Fact]
         public void LoadPeople_ValidCall()
         {
@@ -80,30 +81,12 @@ namespace MoqDemoTests.Logic
             // As a consequence we create a mock :
             using (AutoMock mock = AutoMock.GetLoose())
             {
-                // Make sure that when LoadData is called, it returns the content of GetSamplePeople,
-                // instead of really going to the database.
-                string sql = "select * from Person";
-                mock.Mock<ISqliteDataAccess>()
-                    .Setup(_database => _database.LoadData<PersonModel>(sql))
-                    .Returns(GetSamplePeople());
-
-                // mock is now able to create a PersonProcessor  with a fake _database in it :
-                PersonProcessor personProcessor = mock.Create<PersonProcessor>();
+                PersonProcessor personProcessor = mock.GetPersonProcessorWithFakeLoadData();
 
                 // We can now test that LoadPeople makes a call to the database :
-
-                List<PersonModel> expectedPersons = GetSamplePeople();
                 List<PersonModel> actualPersons = personProcessor.LoadPeople();
 
-                Assert.True(actualPersons != null);
-                Assert.Equal(expectedPersons.Count, actualPersons.Count);
-
-                foreach (var (actualPerson, expectedPerson) in actualPersons.Zip(expectedPersons, Tuple.Create))
-                {
-                    Assert.Equal(actualPerson.FirstName, expectedPerson.FirstName);
-                    Assert.Equal(actualPerson.LastName, expectedPerson.LastName);
-                    Assert.Equal(actualPerson.HeightInInches, expectedPerson.HeightInInches);
-                }
+                mock.MakeSureLoadPeopleCallsLoadData(actualPersons);
             }
         }
 
@@ -112,13 +95,9 @@ namespace MoqDemoTests.Logic
         {
             using (AutoMock mock = AutoMock.GetLoose())
             {
-                mock.Mock<ISqliteDataAccess>()
-                    .Setup(_database => _database.LoadDataLongNames<PersonModel>())
-                    .Returns(GetSamplePeopleLongNames());
+                PersonProcessor personProcessor = mock.GetPersonProcessorWithFakeLoadDataLongNames();
 
-                PersonProcessor personProcessor = mock.Create<PersonProcessor>();
-
-                List<PersonModel> expectedPersons = GetSamplePeopleLongNames().Where(a => a.FirstName.Length > 10).ToList();
+                List<PersonModel> expectedPersons = mock.GetSamplePeopleLongNames().Where(a => a.FirstName.Length > 10).ToList();
                 List<PersonModel> actualPersons = personProcessor.LoadPeopleWithLongNames();
 
                 Assert.True(actualPersons != null);
@@ -133,52 +112,20 @@ namespace MoqDemoTests.Logic
             }
         }
 
-        private List<PersonModel> GetSamplePeople()
+        [Fact]
+        public void SavePeople_ValidCall()
         {
-            List<PersonModel> personModels = new List<PersonModel>()
+            using (AutoMock mock = AutoMock.GetLoose())
             {
-                new PersonModel()
-                {
-                    FirstName = "mario",
-                    LastName =  "buzza"
-                },
-                new PersonModel()
-                {
-                    FirstName = "valerie",
-                    LastName =  "bouquet"
-                },
-                new PersonModel()
-                {
-                    FirstName = "julie",
-                    LastName =  "faverjon"
-                },
-            };
+                PersonModel person = mock.GetSamplePeople().First();
+                string sql = "insert into Person (FirstName, LastName, HeightInInches) " +
+                             "values (@FirstName, @LastName, @HeightInInches)";
+                PersonProcessor personProcessor = mock.GetPersonProcessorWithFakeSaveData(person, sql);
 
-            return personModels;
-        }
+                personProcessor.SavePerson(person);
 
-        private List<PersonModel> GetSamplePeopleLongNames()
-        {
-            List<PersonModel> personModels = new List<PersonModel>()
-            {
-                new PersonModel()
-                {
-                    FirstName = "mario",
-                    LastName =  "buzza"
-                },
-                new PersonModel()
-                {
-                    FirstName = "valerie-elisabeth",
-                    LastName =  "bouquet"
-                },
-                new PersonModel()
-                {
-                    FirstName = "julie",
-                    LastName =  "faverjon"
-                },
-            };
-
-            return personModels;
+                mock.MakeSureSaveDataIsCalledExactlyOnce(person, sql);
+            }
         }
     }
 }

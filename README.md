@@ -6,4 +6,6 @@ Moq
 Autofac.Extras.Moq
 ```
 
-<img src="/pictures/test_project.png" title="upload"  width="400">
+## Run Unit Tests
+
+<img src="/pictures/unit_tests.png" title="unit tests"  width="800">
